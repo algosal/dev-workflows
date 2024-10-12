@@ -1,0 +1,59 @@
+<form id="uploadForm" enctype="multipart/form-data">
+  <input
+    type="file"
+    id="fileInput"
+    name="documents[]"
+    multiple
+    style="display: none"
+  />
+  <button type="button" id="addFilesButton">Add Files</button>
+  <ul id="fileList"></ul>
+  <!-- This will display the list of file names -->
+  <button type="submit">Upload</button>
+</form>
+
+<script>
+  document.getElementById("addFilesButton").onclick = function () {
+    // Trigger the hidden file input when the button is clicked
+    document.getElementById("fileInput").click();
+  };
+
+  document.getElementById("fileInput").onchange = function (event) {
+    let files = event.target.files;
+    let fileList = document.getElementById("fileList");
+
+    // Clear the current file list
+    fileList.innerHTML = "";
+
+    // Loop through the selected files and display their names
+    for (let i = 0; i < files.length; i++) {
+      let li = document.createElement("li");
+      li.textContent = files[i].name;
+      fileList.appendChild(li);
+    }
+  };
+
+  document.getElementById("uploadForm").onsubmit = function (event) {
+    event.preventDefault();
+
+    let formData = new FormData();
+    let files = document.getElementById("fileInput").files;
+
+    // Append all selected files to the FormData object
+    for (let i = 0; i < files.length; i++) {
+      formData.append("documents[]", files[i]);
+    }
+
+    fetch("/api/businesses/upload", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((error) => {
+        console.error("Error uploading files:", error);
+      });
+  };
+</script>
