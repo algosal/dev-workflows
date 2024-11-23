@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload to Lambda</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      input[type="file"] {
+        display: block;
+        margin: 20px 0;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #218838;
+      }
+      .message {
+        margin-top: 20px;
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Upload PDF to Lambda</h2>
+      <input type="file" id="fileInput" accept="application/pdf" />
+      <button onclick="uploadFile()">Upload File</button>
+      <div id="statusMessage" class="message"></div>
+    </div>
+
+    <script>
+      function uploadFile() {
+        const fileInput = document.getElementById("fileInput");
+        const statusMessage = document.getElementById("statusMessage");
+
+        if (!fileInput.files[0]) {
+          statusMessage.textContent = "Please select a file to upload.";
+          statusMessage.classList.add("error");
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function () {
+          const base64File = reader.result.split(",")[1]; // Extract Base64 part
+          const payload = {
+            fileInformation: {
+              fileName: file.name,
+              fileType: file.type,
+            },
+            body: base64File,
+            email: "2@example.com",
+            businessId: "1",
+            userGivenName: "my name",
+          };
+
+          fetch(
+            "https://xu4z97vz6l.execute-api.us-east-2.amazonaws.com/v1/api/businesses-profiles",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              console.log(data);
+              statusMessage.textContent = "File uploaded successfully!";
+              statusMessage.classList.remove("error");
+              statusMessage.classList.add("message");
+            })
+            .catch((error) => {
+              statusMessage.textContent =
+                "Error uploading file: " + error.message;
+              statusMessage.classList.add("error");
+            });
+        };
+
+        reader.readAsDataURL(file);
+      }
+    </script>
+  </body>
+</html>
