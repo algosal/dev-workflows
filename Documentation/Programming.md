@@ -1,6 +1,6 @@
 # Question from AI about Programming
 
-## I have am important question. is programming something you must remember the syntax of or how would you go about learning it?
+## I have am important question. Is programming something you must remember the syntax of or how would you go about learning it?
 
 ### AI Answer
 
