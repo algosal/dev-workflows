@@ -132,5 +132,3 @@ class Program
 2. **Linq Compatibility**: Many LINQ methods, like `Where`, `Select`, and `OrderBy`, operate on `IEnumerable<T>`.
 
 ---
-
-Let me know if you'd like to see more advanced use cases! 🌟
