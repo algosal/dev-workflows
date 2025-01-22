@@ -27,4 +27,4 @@ Once you have updated your custom nameservers, you can verify the DNS propagatio
 ### **Additional Notes**
 
 - DNS propagation typically takes **24–48 hours** to fully update worldwide, though some changes may appear sooner.
-- If you still see old nameservers after this period, try clearing your DNS cache (as described earlier) or check with your hosting provider for assistance.
+- If you still see old nameservers after this period, try clearing your DNS cache (in cmd C:\Users\yourusername>ipconfig /flushdns) or check with your hosting provider for assistance.
