@@ -1,348 +1,579 @@
-# Nexa CLI Architecture Guide
+# 🚀 Nexa CLI Deep Architecture Guide
 
-This document explains what `bin/nexa.js` does and what the surrounding files and folders are responsible for, based on the current Nexa CLI structure and behavior. The current CLI entrypoint is a single executable file that parses commands, generates apps/components/services/contexts, handles flags like `--base`, and writes project files into a new app scaffold. :contentReference[oaicite:0]{index=0}
+Welcome to the **full line-by-line understanding guide** for Nexa CLI.
 
----
+This document explains:
 
-## 1. High-level purpose of `bin/nexa.js`
-
-`bin/nexa.js` is the main command-line entrypoint for Nexa. It is responsible for:
-
-- reading the command line arguments
-- printing help and version info
-- deciding which command the user asked for
-- generating files and folders
-- scaffolding a full React + Vite app
-- supporting subpath deployment through `--base`
-- installing dependencies
-- optionally auto-starting the generated app
-
-In short, it is currently both the **CLI router** and the **project generator engine**. :contentReference[oaicite:1]{index=1}
+- what `bin/nexa.js` does
+- what each function is responsible for
+- how the supporting folders work
+- how generation flows from command → files → app
+- why the current architecture works
+- where it should evolve next
 
 ---
 
-## 2. What the first lines do
+# 🧭 Big Picture
 
-### Shebang
+Nexa CLI is a **project generator + code scaffolder**.
 
-````js
+It currently does three big jobs:
+
+1. 🛠 **Parses commands**
+2. 📁 **Generates files and folders**
+3. ⚙️ **Builds a full React + Vite starter app**
+
+So when someone runs:
+
+```bash
+npx create-nexa-app my-app
+```
+
+Nexa:
+
+- understands the command
+- creates the app folder
+- copies the template
+- writes dynamic files
+- installs dependencies
+- optionally starts the app
+
+---
+
+# 📍 Main Entry File
+
+## `bin/nexa.js`
+
+This is the **main CLI brain**.
+
+It is responsible for:
+
+- reading CLI arguments
+- printing help
+- printing version
+- routing commands
+- generating apps
+- generating components
+- generating services
+- generating contexts
+- handling `--base`
+- installing npm dependencies
+- asking whether to auto-start the app
+
+👉 Right now, it is doing a lot.
+That is why refactoring it into smaller files is the next smart move.
+
+---
+
+# 🧱 File Header and Runtime Setup
+
+## 1. Shebang
+
+```js
 #!/usr/bin/env node
+```
 
-This makes the file executable as a CLI command in Node environments.
+### ✅ Purpose
 
-### Imports
+This makes the file executable as a Node CLI script.
 
-The file imports:
+### 🧠 Meaning
 
-* `fs` → reading/writing files
-* `path` → building safe file paths
-* `os` → platform checks like macOS vs Windows
-* `readline` → asking yes/no questions in terminal
-* `fileURLToPath` → resolving paths in ES modules
-* `execSync`, `spawn` → running npm commands and dev servers
+It tells the system:
 
-These imports are the core Node APIs the CLI depends on.
+> “Run this file using Node.”
 
-### Runtime path setup
+Without it, the file is just a JavaScript file.
+With it, it becomes a CLI entrypoint.
+
+---
+
+## 2. Imports
+
+```js
+import fs from "fs";
+import path from "path";
+import os from "os";
+import readline from "readline";
+import { fileURLToPath } from "url";
+import { execSync, spawn } from "child_process";
+```
+
+### ✅ Purpose of each import
+
+- `fs` 📂 → read/write files
+- `path` 🛣 → build safe file paths
+- `os` 💻 → detect platform (Mac / Windows / Linux)
+- `readline` ⌨️ → ask yes/no questions in terminal
+- `fileURLToPath` 🔄 → get file path in ESM mode
+- `execSync`, `spawn` ▶️ → run npm and dev server commands
+
+### 🧠 Why this matters
+
+These imports give Nexa the ability to:
+
+- act like a real CLI
+- create projects
+- interact with the terminal
+- launch other processes
+
+---
+
+## 3. File path and args setup
 
 ```js
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const args = process.argv.slice(2);
-````
-
-This does three things:
-
-- resolves the current file path in ESM mode
-- gets the current directory
-- captures CLI arguments after the command name
-
-Example:
-
-```bash
-npx create-nexa-app my-app --base /portal/
 ```
 
-becomes something like:
+### ✅ Purpose
+
+- `__filename` → full path of the current file
+- `__dirname` → current folder
+- `args` → command-line arguments after the command name
+
+### 🧠 Example
+
+If a user runs:
+
+```bash
+create-nexa-app my-app --base /portal/
+```
+
+Then:
 
 ```js
 args = ["my-app", "--base", "/portal/"];
 ```
 
----
-
-## 3. Version handling
-
-The CLI reads `package.json` and prints the current version when the user runs:
-
-- `nexa --version`
-- `nexa -v`
-- `nexa version`
-
-That is handled right near the top before normal command parsing continues.
-
-Purpose:
-
-- lets users verify which CLI version is installed
-- helps debugging mismatches between local and published versions
+This is the raw input Nexa uses to decide what to do.
 
 ---
 
-## 4. Terminal colors object
+# 🔢 Version Handling
 
-The `C` object stores ANSI escape codes for colored terminal output. It supports:
+## 4. Reading package.json
 
-- reset
-- cyan
-- yellow
-- green
-- blue
-- gray
-- bold
+```js
+const pkg = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"),
+);
+```
 
-Purpose:
+### ✅ Purpose
 
-- makes help text and logs easier to read
-- gives Nexa branded terminal output
+Loads the CLI’s own `package.json`.
+
+### 🧠 Why
+
+Needed for:
+
+- `--version`
+- checking current CLI version
+- showing correct release number
 
 ---
 
-## 5. Utility functions
+## 5. Version command block
 
-These functions are small reusable helpers used throughout the CLI.
+```js
+if (
+  args.includes("--version") ||
+  args.includes("-v") ||
+  args[0] === "version"
+) {
+  console.log(`Nexa CLI v${pkg.version}`);
+  process.exit(0);
+}
+```
 
-### `toPascalCase(str)`
+### ✅ Purpose
 
-Converts strings like:
+Lets users run:
 
-- `my-app`
-- `my_app`
-- `my app`
+```bash
+nexa --version
+nexa -v
+nexa version
+```
 
-into:
+### 🧠 Why useful
 
-- `MyApp`
+This is extremely helpful for:
 
-Purpose:
+- debugging
+- support
+- confirming publish/install success
+
+---
+
+# 🎨 Terminal Colors
+
+## 6. `C` object
+
+```js
+const C = {
+  reset: "\x1b[0m",
+  cyan: "\x1b[36m",
+  yellow: "\x1b[33m",
+  green: "\x1b[32m",
+  blue: "\x1b[34m",
+  gray: "\x1b[90m",
+  bold: "\x1b[1m",
+};
+```
+
+### ✅ Purpose
+
+Stores color codes for the terminal.
+
+### 🧠 What it powers
+
+- branded help output
+- success messages
+- warnings
+- structured logs
+
+### 🎯 Effect
+
+Makes Nexa feel like a polished CLI product rather than plain terminal text.
+
+---
+
+# 🔤 Name Conversion Utilities
+
+These are foundational helpers used everywhere.
+
+---
+
+## 7. `toPascalCase(str)`
+
+### ✅ Purpose
+
+Converts user-friendly names into component/class/display names.
+
+### Example
+
+```js
+toPascalCase("my-app"); // "MyApp"
+toPascalCase("user_profile"); // "UserProfile"
+```
+
+### 🧠 Used for
 
 - component names
 - display names
-- class-friendly generated naming
+- file names like `MyComponent.jsx`
 
-### `toKebabCase(str)`
+---
 
-Converts strings like:
+## 8. `toKebabCase(str)`
 
-- `MyApp`
-- `my app`
+### ✅ Purpose
 
-into:
+Converts names into folder/package/route-safe names.
 
-- `my-app`
+### Example
 
-Purpose:
+```js
+toKebabCase("MyApp"); // "my-app"
+toKebabCase("my app"); // "my-app"
+```
+
+### 🧠 Used for
 
 - folder names
 - package names
-- route paths
+- URLs and route paths
 
-### `toCssClassName(str)`
+---
 
-Takes a string and converts it to a safe CSS class prefix.
+## 9. `toCssClassName(str)`
 
-Purpose:
+### ✅ Purpose
 
-- helps generated CSS class naming stay predictable
+Creates a safe CSS class prefix.
 
-### `writeFileSafe(filePath, content)`
+### Example
 
-Ensures the parent directory exists, then writes the file.
+```js
+toCssClassName("My App!"); // "my-app"
+```
 
-Purpose:
+### 🧠 Used for
 
-- lets Nexa write files without crashing if folders do not exist yet
+- generated CSS classes
+- avoiding invalid characters in styles
 
-### `copyRecursive(src, dest)`
+---
 
-Copies the template folder into the new app while skipping junk such as:
+# 📁 File and Copy Utilities
+
+---
+
+## 10. `writeFileSafe(filePath, content)`
+
+### ✅ Purpose
+
+Writes a file safely.
+
+### What it does
+
+- ensures the parent directory exists
+- writes the file content
+
+### 🧠 Why important
+
+Without this, Nexa would fail when writing nested files into folders that do not exist yet.
+
+---
+
+## 11. `copyRecursive(src, dest)`
+
+### ✅ Purpose
+
+Copies the template into a new app.
+
+### What it skips
 
 - `node_modules`
 - `.git`
 - `.DS_Store`
 - `.env*`
 
-Purpose:
+### 🧠 Why important
 
-- creates a clean generated app from a prepared template
-- avoids leaking local development clutter into generated projects
+This prevents junk/dev files from leaking into generated apps.
 
-All of these utilities are foundational to generation behavior.
+### 🎯 Role in Nexa
+
+This is what transforms the `template/` folder into a fresh new project.
 
 ---
 
-## 6. Project-root safety check
+# 🧯 Safety Check for Generators
 
-### `ensureProjectRootForGenerators()`
+---
 
-This function prevents commands like component/service/context generation from being run in the wrong place.
+## 12. `ensureProjectRootForGenerators()`
 
-It verifies:
+### ✅ Purpose
 
-- the current directory is **not inside `src/`**
+Prevents component/service/context generators from running in the wrong folder.
+
+### It checks
+
+- user is not inside `src/`
 - `package.json` exists
 - `src/` exists
 
-Purpose:
+### 🧠 Why important
 
-- prevents users from running generators in nested folders
-- keeps generated files in the correct project structure
-
-This is especially important for commands like:
+Commands like:
 
 ```bash
 nexa new gc Header
-nexa new svc AuthService
-nexa new ctx UserSession
 ```
 
+should run from the **app root**, not from random folders.
+
+This function protects the user from messy generation.
+
 ---
 
-## 7. Help output
+# 📖 Help System
 
-### `printUsage()`
+---
 
-This prints the CLI help information:
+## 13. `printUsage()`
 
-- branding lines
-- core commands
-- `create-nexa-app` usage
-- `--base` flag
-- `--version`
+### ✅ Purpose
+
+Prints CLI help.
+
+### It explains
+
+- branding
+- commands
 - examples
+- `create-nexa-app`
+- `nexa new`
+- `--base`
+- `--version`
 
-Purpose:
+### 🧠 Why important
 
-- explains how to use the CLI
-- serves as the first-level documentation inside the terminal
+This is the CLI’s built-in documentation.
 
-This is the main user-facing CLI reference during normal usage.
+It is the first thing users see when:
+
+- they ask for help
+- they type invalid commands
+- they are learning the tool
 
 ---
 
-## 8. Interactive terminal helpers
+# 💬 Interactive Input
 
-### `askYesNo(question)`
+---
 
-Prompts the user for `y/n` input.
+## 14. `askYesNo(question)`
 
-Used for:
+### ✅ Purpose
+
+Asks the user a yes/no question in the terminal.
+
+### Used for
 
 - auto-start app?
-- open browser automatically?
+- open browser?
 
-### `openBrowser(url)`
+### 🧠 Why important
 
-Opens the generated app in the system browser depending on platform:
+Adds an interactive touch after generation.
+
+Instead of forcing behavior, Nexa asks.
+
+---
+
+# 🌐 Browser Opening Logic
+
+---
+
+## 15. `openBrowser(url)`
+
+### ✅ Purpose
+
+Opens a URL in the system browser.
+
+### Platform handling
 
 - macOS → `open`
 - Windows → `cmd /c start`
 - Linux → `xdg-open`
 
-### `startGeneratedApp(projectDir, shouldOpenBrowser)`
+### 🧠 Why important
 
-Runs:
+Keeps the experience smooth after app generation.
+
+---
+
+## 16. `startGeneratedApp(projectDir, shouldOpenBrowser, appBase)`
+
+### ✅ Purpose
+
+Starts the generated app with:
 
 ```bash
 npm run dev
 ```
 
-inside the generated project and optionally opens the app in the browser.
+inside the new app folder.
 
-Purpose:
+### Also
 
-- gives a smooth “generate and launch” experience after project creation
+- optionally opens the browser
+- prints stop message when dev server exits
+
+### 🧠 Why important
+
+This is what makes Nexa feel “instant” after generation.
 
 ---
 
-## 9. Generator commands for files inside an existing app
+# ⚙️ Generator Commands for Existing Apps
 
-These commands operate inside a Nexa-generated app.
+These are commands used **inside** a Nexa-generated app.
 
-### `createService(serviceName)`
+---
 
-Creates a file in:
+## 17. `createService(serviceName)`
+
+### ✅ Purpose
+
+Generates a service file in:
 
 ```text
 src/services/
 ```
 
-It generates a service module with sample:
+### Output includes
 
-- `GET`
-- `POST`
+- sample GET method
+- sample POST method
+- placeholder base URL
 
-patterns.
+### 🧠 Why useful
 
-Purpose:
+Gives API logic a clean, consistent starting point.
 
-- provide a clean starting point for API integration
+---
 
-### `createContext(contextName)`
+## 18. `createContext(contextName)`
 
-Creates a file in:
+### ✅ Purpose
+
+Generates a React context file in:
 
 ```text
 src/contexts/
 ```
 
-with a React `createContext(...)` setup.
+### Output includes
 
-Purpose:
+- `createContext(null)`
 
-- quickly scaffold state/context structure
+### 🧠 Why useful
 
-### `createComponent(componentName)`
+Quickly scaffolds shared state / provider structure.
 
-Creates a full component folder under:
+---
 
-```text
-src/components/<ComponentName>/
-```
+## 19. `createComponent(componentName)`
 
-including:
+### ✅ Purpose
 
-- main JSX component
-- child component
+Generates a new component folder with:
+
+- JSX component
+- child JSX component
 - CSS file
 
-It also attempts to update:
+### Also attempts to update
 
 ```text
 src/config/routeMeta.js
 ```
 
-by inserting a new route metadata entry if that file exists.
+### 🧠 Why important
 
-Purpose:
-
-- generate a styled Nexa-compatible component quickly
-- keep navigation/header systems aligned through route metadata
+This is one of Nexa’s key value points:
+not just file creation, but structured component generation with styling and metadata.
 
 ---
 
-## 10. The heart of app generation: `createApp(rawAppName, appBase = "/")`
+# 🏗 Main App Generator
 
-This is the main app scaffolding function.
+---
 
-It performs the following major steps.
+## 20. `createApp(rawAppName, appBase = "/")`
 
-### a. Name conversion
+This is the **main application scaffolder**.
 
-It derives:
+It is the biggest and most important function in the CLI.
 
-- `projectDirName` → kebab-case folder name
-- `displayName` → PascalCase app display name
-- `packageName` → kebab-case npm package name
+---
+
+## Step-by-step inside `createApp`
+
+### 🧾 a. Name derivation
+
+Creates:
+
+- `projectDirName`
+- `displayName`
+- `packageName`
 
 Example:
 
@@ -353,110 +584,254 @@ displayName = "MyApp"
 packageName = "my-app"
 ```
 
-### b. Base path normalization
+### 🧠 Why
 
-It computes:
+Different naming styles are needed for:
+
+- folders
+- display strings
+- npm package names
+
+---
+
+### 🛣 b. Base path normalization
 
 ```js
 const APP_BASE = normalizeBase(appBase);
 ```
 
-This is used to support subpath deployments such as:
+### ✅ Purpose
 
+Ensures base is always in correct form:
+
+- `/`
 - `/portal/`
 - `/dashboard/`
 
-### c. Validation
+### 🧠 Why
 
-It checks:
+Critical for subpath deployments.
+
+---
+
+### 🧱 c. Validations
+
+Checks:
 
 - app name exists
 - template folder exists
-- target folder does not already exist
+- app folder does not already exist
 
-### d. Creates the project folder
+### 🧠 Why
 
-It makes the destination app directory.
+Prevents accidental overwrite or invalid generation.
 
-### e. Copies the template
+---
 
-It copies `template/` into the new project.
+### 📂 d. Create project directory
 
-This is the starting scaffold for all generated apps.
+```js
+fs.mkdirSync(projectDir, { recursive: true });
+```
 
-### f. Writes `.gitignore`
+Creates the new app folder.
 
-If not present, it generates a standard ignore file.
+---
 
-### g. Writes or patches `index.html`
+### 📋 e. Copy template
 
-This file becomes the root HTML document for the generated Vite app.
+```js
+copyRecursive(templateDir, projectDir);
+```
 
-It ensures:
+### ✅ Purpose
 
-- title branding
+Copies the prepared Nexa starter structure into the app.
+
+### 🧠 Why
+
+This is the foundation of the generated app.
+
+---
+
+### 📝 f. Gitignore generation
+
+Adds a `.gitignore` if missing.
+
+### Includes
+
+- node_modules
+- logs
+- env files
+- dist/build output
+- editor files
+
+---
+
+### 🌐 g. `index.html` generation / patching
+
+This is one of the key files.
+
+It is responsible for:
+
+- app title
 - manifest link
 - icon link
-- `src/main.jsx` script path
+- root HTML shell
 
-For base-aware generation, this file must reflect the right manifest/icon references.
+### Important design rule
 
-### h. Writes `public/manifest.json`
+For Apache-friendly subpath deployment:
 
-This creates the PWA manifest and defines:
+- `index.html` uses **relative links**
+- e.g. `./manifest.json`
+
+### Why
+
+Absolute links like `/manifest.json` break under subfolders.
+
+---
+
+### 📱 h. `manifest.json` generation
+
+This creates the PWA manifest.
+
+### Defines
 
 - app name
 - short name
 - start URL
 - scope
-- theme colors
-- icon references
+- display mode
+- colors
+- icon paths
 
-### i. Writes generated `package.json`
+### Important design rule
 
-The generated app gets its own package configuration with scripts like:
+This now should also use **relative references**:
 
-- `dev`
-- `start`
-- `nexa`
-- `build`
-- `preview`
+- `./`
+- `./icons/icon-192.png`
 
-### j. Writes `src/main.jsx`
+### Why
 
-This file is the React entrypoint for the generated app.
+So the manifest works correctly under subpaths.
 
-It handles:
+---
+
+### 📦 i. Generated app `package.json`
+
+Creates a new `package.json` for the generated app.
+
+### Includes
+
+- scripts:
+  - `dev`
+  - `start`
+  - `nexa`
+  - `build`
+  - `preview`
+
+- React dependencies
+- Vite dependencies
+
+---
+
+### ⚛️ j. `src/main.jsx`
+
+This is the app’s React entrypoint.
+
+### It handles
 
 - ReactDOM mounting
 - CSS import
-- `BrowserRouter`
+- router setup
 - service worker registration
-- `APP_BASE` routing support
+- app base path logic
 
-### k. Writes `src/App.jsx`
+### Important behavior
 
-Creates a starter app shell for the generated project.
+For base support:
 
-### l. Writes `src/App.css`
+- uses `APP_BASE`
+- sets `BrowserRouter basename`
+- registers service worker at the correct path
 
-Adds base styling and a starter visual structure.
+### Important architectural rule
 
-### m. Writes `run.js`
+This file must be **always rewritten**, not conditionally skipped.
 
-This script starts the generated app through Vite and prints Nexa-branded startup output.
+---
 
-### n. Writes `nexa.config.js`
+### 🧩 k. `src/App.jsx`
 
-This is the Vite configuration for the generated app.
+Creates the starter app UI shell.
 
-It controls:
+### Includes
 
-- base path
+- welcome text
+- branding
+- structure
+
+### Purpose
+
+Gives every generated app a visible starting point.
+
+---
+
+### 🎨 l. `src/App.css`
+
+Defines base styles for the starter shell.
+
+### Purpose
+
+Makes generated apps look clean immediately.
+
+---
+
+### ▶️ m. `run.js`
+
+This file starts the generated app’s dev server via Vite.
+
+### It does
+
+- print Nexa-branded startup output
+- launch Vite
+- pipe Vite output into the terminal
+
+### Why important
+
+This is what powers:
+
+```bash
+npm run dev
+npm run nexa
+npm start
+```
+
+inside generated apps.
+
+---
+
+### ⚙️ n. `nexa.config.js`
+
+This is the Vite config for generated apps.
+
+### Controls
+
+- root
+- base
+- plugins
 - server port
 - build output
 
-### o. Installs dependencies
+### Important architectural rule
+
+This file must also be **always rewritten**, because `--base` changes it.
+
+---
+
+### 📥 o. Dependency installation
 
 Runs:
 
@@ -464,65 +839,97 @@ Runs:
 npm install
 ```
 
-inside the generated project.
+inside the generated app folder.
 
-### p. Offers auto-start
+### Purpose
 
-Asks if the user wants to launch the app immediately.
-
-This function is the current center of Nexa’s app creation flow.
+Makes the generated app immediately usable.
 
 ---
 
-## 11. Base-path support
+### ❓ p. Auto-start prompts
 
-### `normalizeBase(input = "/")`
+Asks:
 
-This helper ensures base values are normalized into forms like:
+- auto start?
+- open browser?
 
-- `/`
-- `/portal/`
-- `/dashboard/`
+### Purpose
 
-Purpose:
+Makes the first-run experience smooth and interactive.
 
-- prevent malformed paths
-- make subpath deployments consistent
+---
 
-### `getFlagValue(argv, flagName)`
+# 🛣 Base Support Helpers
 
-Reads a flag value from the CLI input, such as:
+---
+
+## 21. `normalizeBase(input = "/")`
+
+### ✅ Purpose
+
+Normalizes deployment base path.
+
+### Examples
+
+```js
+normalizeBase("/"); // "/"
+normalizeBase("portal"); // "/portal/"
+normalizeBase("/portal"); // "/portal/"
+normalizeBase("/portal/"); // "/portal/"
+```
+
+### 🧠 Why important
+
+Prevents malformed base paths.
+
+---
+
+## 22. `getFlagValue(argv, flagName)`
+
+### ✅ Purpose
+
+Finds a CLI flag’s value.
+
+Example:
 
 ```bash
 --base /portal/
 ```
 
-### `parseArgs(argv)` with `--base`
+returns:
 
-This reads the base flag, removes it from the raw argument list, and returns the command + name + base.
+```js
+"/portal/";
+```
 
-Purpose:
+### 🧠 Why useful
 
-- supports subpath deployment generation cleanly
-- lets the rest of the generator work with a single normalized `base`
+Allows commands to accept options cleanly.
 
 ---
 
-## 12. Command parsing
+# 🧠 Command Parsing
 
-### `parseArgs(argv)`
+---
 
-This function decides what the user is trying to do.
+## 23. `parseArgs(argv)`
 
-It supports patterns like:
+This is the CLI routing parser.
 
-- `nexa new app my-app`
-- `nexa new my-app`
-- `nexa new gc Header`
-- `create-nexa-app my-app`
-- `create-nexa-app my-app --base /portal/`
+### Responsibilities
 
-It returns an object such as:
+- read `--base`
+- strip it from main arguments
+- detect help/version
+- support:
+  - `nexa new app my-app`
+  - `nexa new my-app`
+  - `create-nexa-app my-app`
+
+### Returns
+
+An object like:
 
 ```js
 {
@@ -532,80 +939,92 @@ It returns an object such as:
 }
 ```
 
-Purpose:
+### 🧠 Why important
 
-- translate user input into generator actions
-- support both Nexa-style and CRA-style command entry
-
----
-
-## 13. Main command dispatcher
-
-After parsing, the file does:
-
-```js
-const { shortcut, name, base } = parseArgs(args);
-```
-
-Then `main()` routes to the correct behavior:
-
-- `svc` → `createService`
-- `ctx` → `createContext`
-- `gc` / `cc` → `createComponent`
-- `app` → `createApp(name, base)`
-
-Purpose:
-
-- central switchboard for CLI execution
+This is the translator between user input and generator actions.
 
 ---
 
-## 14. Supporting files and folders
+# 🚦 Main Dispatcher
 
-### `bin/`
+---
 
-Contains executable entry files.
+## 24. `main()`
 
-Current role:
+After parsing, this function decides which action to run.
 
-- `bin/nexa.js` = main CLI entrypoint
+### Routes to
 
-Future refactor target:
+- `createService`
+- `createContext`
+- `createComponent`
+- `createApp`
 
-- keep entry file small
-- move logic into smaller modules
+### Purpose
 
-### `template/`
+Acts as the central CLI switchboard.
 
-This is the scaffold copied into every newly generated app.
+---
 
-It contains the base project structure such as:
+# 📁 Supporting Folders
+
+---
+
+## `bin/`
+
+### Purpose
+
+Contains executable CLI entry files.
+
+### Current state
+
+- `bin/nexa.js` = full CLI brain
+
+### Future goal
+
+Keep entrypoint small and move logic to modules.
+
+---
+
+## `template/`
+
+### Purpose
+
+Starter app blueprint copied into every generated app.
+
+### It contains
 
 - `public/`
 - `src/`
 - config files
-- starter components
+- starter UI
+- assets
 
-It is the “starter project blueprint” for Nexa.
+### 🧠 Why important
 
-### `template/public/`
+This is the raw material Nexa transforms into a real app.
 
-Contains public assets copied into new apps:
+---
 
-- `index.html` template source
+## `template/public/`
+
+### Contains
+
+- `index.html`
 - `manifest.json`
-- `nexa.svg`
 - `sw.js`
-- app icons
+- `nexa.svg`
+- icons
 
-Purpose:
+### Purpose
 
-- PWA and branding assets
-- root HTML source template
+PWA + branding + public web assets.
 
-### `template/src/`
+---
 
-Contains the starter React app code:
+## `template/src/`
+
+### Contains
 
 - `App.jsx`
 - `App.css`
@@ -614,56 +1033,46 @@ Contains the starter React app code:
 - `config/`
 - `assets/`
 
-Purpose:
+### Purpose
 
-- defines the default UI shell and architecture users get immediately
-
-### `template/src/components/`
-
-Houses starter UI components such as:
-
-- Home
-- Navbar
-- DynamicHeader
-- Nexa
-
-Purpose:
-
-- gives users a structured prebuilt UI instead of a blank app
-
-### `template/src/config/routeMeta.js`
-
-Central metadata-driven route definition file.
-
-Purpose:
-
-- drives dynamic header behavior
-- supports navigation structure
-- is updated by component generators
-
-### `template/public/sw.js`
-
-Service worker file for PWA support.
-
-Purpose:
-
-- installability
-- caching behavior
-- offline/PWA capabilities
-
-### `template/nexa.config.js`
-
-Base Vite config copied into generated apps.
-
-Purpose:
-
-- gives Nexa apps consistent build and dev behavior
+Provides the structured app shell.
 
 ---
 
-## 15. Generated app files
+## `template/src/components/`
 
-When a user creates a Nexa app, the generated project typically includes:
+### Purpose
+
+Starter UI components like:
+
+- Navbar
+- DynamicHeader
+- Home
+- Nexa
+
+These make the generated app feel production-ready.
+
+---
+
+## `template/src/config/routeMeta.js`
+
+### Purpose
+
+Centralized route metadata.
+
+### Powers
+
+- navbar labels
+- dynamic header titles/subtitles
+- route-level UI metadata
+
+This is one of Nexa’s strongest architectural differentiators.
+
+---
+
+# 🏁 Generated App Files
+
+A generated Nexa app typically contains:
 
 - `index.html`
 - `public/manifest.json`
@@ -676,33 +1085,47 @@ When a user creates a Nexa app, the generated project typically includes:
 - `nexa.config.js`
 - `package.json`
 
-These become the new app’s runnable codebase.
+These files form the generated application shell.
 
 ---
 
-## 16. Current architectural reality
+# 🧪 Current Architecture Strengths
 
-Right now, `bin/nexa.js` is doing **too many jobs**:
+## ✅ Strong points
+
+- very fast app creation
+- strong UI starter structure
+- route-driven metadata system
+- base-path support
+- PWA support
+- generator commands for multiple file types
+
+---
+
+# ⚠️ Current Architecture Weakness
+
+`bin/nexa.js` is too large.
+
+It currently combines:
 
 - CLI parsing
-- help/version handling
-- file writing utilities
+- help/version
+- utilities
 - app generation
-- component generation
 - service generation
+- component generation
 - context generation
-- PWA setup
-- base-path setup
-- interactive prompts
-- app startup
+- startup logic
+- prompts
+- base logic
 
-That is why refactoring into smaller files is the right next step.
+That is manageable now, but it will become painful as new packages and commands are added.
 
 ---
 
-## 17. Recommended future refactor
+# 🔮 Refactor Direction
 
-A cleaner structure would be:
+Recommended split:
 
 ```text
 bin/
@@ -715,39 +1138,93 @@ lib/
   createComponent.js
   createService.js
   createContext.js
-  utils.js
   flags.js
   base.js
+  utils.js
 ```
 
-Purpose:
+### Why
 
-- make code easier to maintain
-- support future packages like:
+- easier maintenance
+- easier testing
+- reusable across:
   - `nexa-cli`
   - `create-nexa-app`
   - `create-nexa-redux`
 
 ---
 
-## 18. Package strategy moving forward
+# 📦 Package Strategy Going Forward
 
-Current direction:
+## `nexa-cli`
 
-- **`nexa-cli`** → experimental package for testing and evolving new features
-- **`create-nexa-app`** → stable production starter
-- **`create-nexa-redux`** → future Redux-enabled starter
+🧪 Experimental package
 
-The idea is:
+Purpose:
 
-1. experiment inside `nexa-cli`
-2. stabilize the feature
-3. move the finished logic into `create-nexa-app` or `create-nexa-redux`
-
-That is a strong product architecture direction.
+- prototype new ideas
+- test unstable commands
+- build features before stabilizing them
 
 ---
 
-## 19. In one sentence
+## `create-nexa-app`
 
-`bin/nexa.js` is currently the full Nexa engine: it reads commands, generates projects and files, manages base-path support, installs dependencies, and launches the result — while the `template/` folder supplies the starter project blueprint it builds from.
+✅ Stable production starter
+
+Purpose:
+
+- user-facing app generator
+- clean CLI UX
+- stable releases
+
+---
+
+## `create-nexa-redux`
+
+🧠 Future Redux-enabled starter
+
+Purpose:
+
+- include Redux Toolkit
+- include store setup
+- include slice generation commands
+- possibly support:
+  - `nexa csl auth`
+
+---
+
+# 🎯 Final Summary
+
+## In one sentence:
+
+**`bin/nexa.js` is the full Nexa engine right now: it reads commands, processes flags, generates projects and files, configures routing/PWA/build behavior, installs dependencies, and launches the result — while the `template/` folder provides the starter app blueprint it builds from.**
+
+---
+
+# 💡 Best Mental Model
+
+Think of Nexa like this:
+
+- 🧠 `bin/nexa.js` = brain
+- 🧰 helpers = tools
+- 🏗 `template/` = raw building materials
+- 🚀 generated app = finished starter product
+
+---
+
+# 🔥 Recommended next step
+
+The smartest next move is:
+
+1. refactor `bin/nexa.js` into smaller modules
+2. keep `nexa-cli` experimental
+3. move stable features into:
+   - `create-nexa-app`
+   - `create-nexa-redux`
+
+That gives you a clean product ecosystem and keeps innovation fast without destabilizing the main packages.
+
+```
+
+```
