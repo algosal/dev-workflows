@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Redux Demo</title>
+
+    <!-- ✅ CSS LINKED HERE -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>🧠 Mini Redux System</h1>
+
+      <div class="card">
+        <h2>📊 Counter</h2>
+        <div class="count-box">Count: <span id="count">0</span></div>
+
+        <div class="buttons">
+          <button id="inc">➕ Increment</button>
+          <button id="dec">➖ Decrement</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🧠 How it works</h2>
+        <ol>
+          <li>Click button → dispatch action</li>
+          <li>Reducer updates state</li>
+          <li>Store notifies subscribers</li>
+          <li>UI updates automatically ⚡</li>
+        </ol>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
