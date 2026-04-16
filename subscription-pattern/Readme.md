@@ -107,8 +107,6 @@ You will see:
 No polling. No manual refresh.
 Just event-driven updates.
 
-````
-
 ---
 
 # 🧠 Now your explanation (simple + correct)
@@ -142,8 +140,8 @@ It’s not really a stack.
 👉 It’s just an **array (list)**:
 
 ```js
-this.subscribers = []
-````
+this.subscribers = [];
+```
 
 So think:
 
