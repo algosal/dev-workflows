@@ -1,28 +1,34 @@
-# 1. Actual steps required
+# 🚀 1. Actual Steps Required
 
-## A. Ask for required names first
+---
 
-New chat must stop and ask for:
+# 🧾 A. Ask for Required Values FIRST
+
+⚠️ New chat MUST STOP and ask for:
 
 ```txt
-1. AWS profile name
-2. AWS region
-3. REST API ID
-4. API root resource ID
-5. Authorizer ID
-6. AWS account ID
-7. Lambda execution role ARN
-8. New resource name, example: Milestones
-9. DynamoDB table name, example: VaultDeskMilestones
-10. Frontend page name, example: MilestonesPage.jsx
-11. API stage name, example: S1
+1️⃣ AWS profile name
+2️⃣ AWS region
+3️⃣ REST API ID
+4️⃣ API root resource ID
+5️⃣ Authorizer ID
+6️⃣ AWS account ID
+7️⃣ Lambda execution role ARN
+8️⃣ New resource name
+   Example: Milestones
+9️⃣ DynamoDB table name
+   Example: VaultDeskMilestones
+🔟 Frontend page name
+   Example: MilestonesPage.jsx
+1️⃣1️⃣ API stage name
+   Example: S1
 ```
 
 ---
 
-## B. Create DynamoDB table
+# 🗄️ B. Create DynamoDB Table
 
-Pattern:
+### ✅ Standard Pattern
 
 ```bash
 aws dynamodb create-table \
@@ -40,18 +46,20 @@ aws dynamodb create-table \
 
 ---
 
-## C. Create one Lambda codebase
+# ⚙️ C. Create ONE Shared Lambda Codebase
 
-One `lambda_function.py` handles:
+### 📦 One `lambda_function.py` handles:
 
 ```txt
-GET    list records
-POST   create record
-PUT    update record / complete / soft delete
-OPTIONS CORS response
+✅ GET      → list records
+✅ POST     → create record
+✅ PUT      → update / complete / soft delete
+✅ OPTIONS  → CORS response
 ```
 
-Use 3 Lambda functions with same code:
+---
+
+## 🧠 Use 3 Lambda Functions with SAME code
 
 ```txt
 VaultDesk-Create-<ResourceSingular>
@@ -59,7 +67,7 @@ VaultDesk-List-<ResourcePlural>
 VaultDesk-Update-<ResourceSingular>
 ```
 
-Example:
+### ✅ Example
 
 ```txt
 VaultDesk-Create-Milestone
@@ -69,9 +77,9 @@ VaultDesk-Update-Milestone
 
 ---
 
-## D. IAM permissions
+# 🔐 D. IAM Permissions
 
-Add DynamoDB permissions to Lambda role:
+### ➕ Add DynamoDB permissions to Lambda role
 
 ```bash
 aws iam put-role-policy \
@@ -81,7 +89,9 @@ aws iam put-role-policy \
   --profile <PROFILE_NAME>
 ```
 
-Required actions:
+---
+
+## ✅ Required Actions
 
 ```txt
 dynamodb:PutItem
@@ -90,7 +100,9 @@ dynamodb:UpdateItem
 dynamodb:Query
 ```
 
-Resource:
+---
+
+## 🎯 Resource ARN Format
 
 ```txt
 arn:aws:dynamodb:<REGION>:<ACCOUNT_ID>:table/<TABLE_NAME>
@@ -98,9 +110,7 @@ arn:aws:dynamodb:<REGION>:<ACCOUNT_ID>:table/<TABLE_NAME>
 
 ---
 
-## E. API Gateway
-
-Create resource:
+# 🌐 E. API Gateway Resource Creation
 
 ```bash
 aws apigateway create-resource \
@@ -111,19 +121,21 @@ aws apigateway create-resource \
   --profile <PROFILE_NAME>
 ```
 
-Save returned:
+---
+
+## 💾 Save Returned Value
 
 ```txt
 resourceId
 ```
 
-Use it for all methods.
+⚠️ You will use this for ALL methods.
 
 ---
 
-## F. API methods
+# 🛠️ F. API Methods
 
-Create:
+## ✅ Required Methods
 
 ```txt
 GET
@@ -132,31 +144,32 @@ PUT
 OPTIONS
 ```
 
-Optional:
+---
+
+## ❌ DELETE Preferred? NO
+
+Preferred architecture:
 
 ```txt
-DELETE
-```
-
-But preferred pattern:
-
-```txt
-soft delete through PUT with isDeleted=true
+✅ Soft delete through PUT
+✅ isDeleted=true
 ```
 
 ---
 
-## G. API integrations
+# 🔌 G. API Integrations
 
-Use AWS_PROXY integrations:
+## ✅ AWS_PROXY Integrations
 
 ```txt
-GET  -> List Lambda
-POST -> Create Lambda
-PUT  -> Update Lambda
+GET   → List Lambda
+POST  → Create Lambda
+PUT   → Update Lambda
 ```
 
-OPTIONS uses:
+---
+
+## 🌍 OPTIONS Uses
 
 ```txt
 MOCK integration
@@ -164,9 +177,11 @@ MOCK integration
 
 ---
 
-## H. CORS requirements
+# 🧱 H. CORS Requirements
 
-### Lambda must return headers on every response:
+---
+
+# ✅ Lambda MUST Return Headers on EVERY Response
 
 ```python
 "headers": {
@@ -177,21 +192,23 @@ MOCK integration
 }
 ```
 
-### API Gateway must have OPTIONS:
+---
+
+# ✅ API Gateway MUST Have OPTIONS
 
 ```txt
-OPTIONS method
-authorization NONE
-MOCK integration
-method response with CORS headers
-integration response with CORS values
+✅ OPTIONS method
+✅ authorization NONE
+✅ MOCK integration
+✅ method response with CORS headers
+✅ integration response with static CORS values
 ```
 
 ---
 
-## I. Lambda permissions
+# 🔑 I. Lambda Permissions
 
-For each method:
+## ✅ Add Permission for EACH Method
 
 ```bash
 aws lambda add-permission \
@@ -206,7 +223,7 @@ aws lambda add-permission \
 
 ---
 
-## J. Deploy API
+# 🚀 J. Deploy API
 
 ```bash
 aws apigateway create-deployment \
@@ -218,35 +235,43 @@ aws apigateway create-deployment \
 
 ---
 
-## K. Frontend
+# 🖥️ K. Frontend Requirements
 
-Create:
+## 📄 Create Page
 
 ```txt
 src/pages/<PageName>.jsx
 ```
 
-Must include:
+---
 
-```txt
-useSelector((state) => state.auth.token)
+# 🔐 MUST Use Redux Token
+
+✅ Correct:
+
+```js
+useSelector((state) => state.auth.token);
 ```
 
-Not:
+❌ WRONG:
 
-```txt
-localStorage.getItem("vaultdesk_token")
+```js
+localStorage.getItem("vaultdesk_token");
 ```
 
-because VaultDesk auth uses Redux.
+Because VaultDesk auth uses Redux. 🧠
 
-Add route:
+---
+
+# ➕ Add Route
 
 ```jsx
 <Route path="<route>" element={<PageName />} />
 ```
 
-Add sidebar link:
+---
+
+# 📚 Add Sidebar Link
 
 ```js
 { to: "/<route>", label: "<Label>" }
@@ -254,141 +279,179 @@ Add sidebar link:
 
 ---
 
-# 2. Exact prompt to give new ChatGPT
-
-Copy this into a new chat:
+# 🚀 2. Exact Prompt for New ChatGPT
 
 ```txt
-I want you to build a full-stack VaultDesk component from scratch.
+🚨 I want you to build a full-stack VaultDesk component from scratch.
 
-IMPORTANT:
-Before writing code, stop and ask me for these values:
+🛑 IMPORTANT:
+Before writing code, STOP and ask me for these values:
 
-1. AWS profile name
-2. AWS region
-3. AWS account ID
-4. REST API ID
-5. API root resource ID
-6. API Gateway authorizer ID
-7. API stage name
-8. Lambda execution role ARN
-9. New resource name plural, example: Milestones
-10. New resource name singular, example: Milestone
-11. DynamoDB table name
-12. Frontend route, example: /milestones
-13. Frontend page name, example: MilestonesPage.jsx
-14. Fields I want in the table/form
+1️⃣ AWS profile name
+2️⃣ AWS region
+3️⃣ AWS account ID
+4️⃣ REST API ID
+5️⃣ API root resource ID
+6️⃣ API Gateway authorizer ID
+7️⃣ API stage name
+8️⃣ Lambda execution role ARN
+9️⃣ New resource name plural
+   Example: Milestones
+🔟 New resource name singular
+   Example: Milestone
+1️⃣1️⃣ DynamoDB table name
+1️⃣2️⃣ Frontend route
+   Example: /milestones
+1️⃣3️⃣ Frontend page name
+   Example: MilestonesPage.jsx
+1️⃣4️⃣ Fields I want in the table/form
 
-After I give you those values, generate everything in this exact order:
+✅ After I give you those values, generate EVERYTHING in this exact order:
 
-1. DynamoDB create-table command.
-2. IAM policy JSON and put-role-policy command.
-3. Full Python Lambda code in one `lambda_function.py`.
-4. Zip command.
-5. Create or update 3 Lambda functions:
-   - Create Lambda
-   - List Lambda
-   - Update Lambda
-6. API Gateway create-resource command.
-7. API Gateway GET method and AWS_PROXY integration.
-8. API Gateway POST method and AWS_PROXY integration.
-9. API Gateway PUT method and AWS_PROXY integration.
-10. API Gateway OPTIONS method with MOCK integration for CORS.
-11. Method response and integration response for OPTIONS CORS.
-12. Lambda add-permission commands for GET, POST, and PUT.
-13. API deployment command.
-14. Full React frontend page.
-15. Router import and route line.
-16. AppLayout sidebar nav item.
+1. DynamoDB create-table command
+2. IAM policy JSON + put-role-policy command
+3. Full Python Lambda code in one lambda_function.py
+4. Zip command
+5. Create/update 3 Lambda functions
+6. API Gateway create-resource command
+7. GET method + AWS_PROXY integration
+8. POST method + AWS_PROXY integration
+9. PUT method + AWS_PROXY integration
+10. OPTIONS method with MOCK integration
+11. OPTIONS method response + integration response
+12. lambda add-permission commands
+13. API deployment command
+14. Full React frontend page
+15. Router import + route line
+16. AppLayout sidebar nav item
 
-Use this backend architecture:
+🧱 Backend Architecture Rules:
 
-- DynamoDB table has partition key `ownerId` string and sort key `epoch` string.
-- Each item must include:
-  - ownerId
-  - epoch
-  - resourceId
-  - createdAt
-  - updatedAt
-  - isDeleted
-- Use soft delete only:
-  - no DELETE API method unless I explicitly request it
-  - delete action should be PUT with `isDeleted: true`
-- GET/List Lambda must filter out records where `isDeleted === true`.
-- PUT must support normal update, complete/check action if relevant, and soft delete.
+✅ DynamoDB keys:
+- ownerId (partition key)
+- epoch (sort key)
 
-Use this Lambda pattern:
+✅ Every item MUST include:
+- ownerId
+- epoch
+- resourceId
+- createdAt
+- updatedAt
+- isDeleted
 
-- Runtime: python3.14
-- Handler: lambda_function.lambda_handler
-- Environment variable for table name
-- `event.requestContext.authorizer.userId` or `principalId` is ownerId
-- Parse JSON body safely
-- Convert Python floats to Decimal before DynamoDB write
-- Convert DynamoDB Decimal to JSON-safe int/float on response
-- Every Lambda response must include CORS headers:
-  - Access-Control-Allow-Origin: *
-  - Access-Control-Allow-Headers: Content-Type,x-vaultdesk-token,Authorization
-  - Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS
-  - Content-Type: application/json
+✅ Soft delete ONLY:
+- NO DELETE endpoint unless explicitly requested
+- PUT with isDeleted=true
 
-Use this API Gateway pattern:
+✅ GET/List Lambda:
+- MUST filter out isDeleted === true
 
-- REST API v1, not HTTP API v2
-- GET/POST/PUT use CUSTOM authorizer
-- OPTIONS uses authorization NONE
-- GET/POST/PUT integrations are AWS_PROXY
-- OPTIONS integration is MOCK
-- Deploy to the stage I provide
+✅ PUT:
+- normal update
+- complete/check action if relevant
+- soft delete
 
-Use this frontend pattern:
+🐍 Lambda Rules:
 
-- React + Vite
-- Inline styles, matching VaultDesk dark UI
-- Use Redux token:
-  `const token = useSelector((state) => state.auth.token);`
-- Do not use localStorage for token
-- Include:
-  - Create form
-  - Edit form
-  - List cards
-  - Search if useful
-  - Required validation
-  - Soft delete button
-  - Toggle for show all vs incomplete/open records if relevant
-  - Category dropdown plus custom category input if category is one of the fields
-- Give full copy-paste-ready files, not snippets.
+✅ Runtime:
+python3.14
 
-Do not over-explain. Give commands and full files.
+✅ Handler:
+lambda_function.lambda_handler
+
+✅ Use environment variable for table name
+
+✅ ownerId comes from:
+event.requestContext.authorizer.userId
+OR principalId
+
+✅ Parse JSON body safely
+
+✅ Convert floats → Decimal before DynamoDB write
+
+✅ Convert DynamoDB Decimal → JSON-safe int/float on response
+
+✅ EVERY response MUST include CORS headers:
+- Access-Control-Allow-Origin
+- Access-Control-Allow-Headers
+- Access-Control-Allow-Methods
+- Content-Type
+
+🌐 API Gateway Rules:
+
+✅ REST API v1
+❌ NOT HTTP API v2
+
+✅ GET/POST/PUT:
+CUSTOM authorizer
+
+✅ OPTIONS:
+authorization NONE
+
+✅ GET/POST/PUT:
+AWS_PROXY integrations
+
+✅ OPTIONS:
+MOCK integration
+
+🎨 Frontend Rules:
+
+✅ React + Vite
+✅ Inline styles
+✅ Match VaultDesk dark UI
+
+✅ Use Redux token:
+const token = useSelector((state) => state.auth.token);
+
+❌ DO NOT use localStorage
+
+✅ Include:
+- Create form
+- Edit form
+- List cards
+- Search if useful
+- Validation
+- Soft delete button
+- Toggle show all vs incomplete/open
+- Category dropdown + custom category input if relevant
+
+✅ Give FULL copy-paste-ready files
+❌ NOT snippets
+
+🚫 Do not over-explain.
+Just give commands and full files.
 ```
 
 ---
 
-# 3. CORS checklist for the new chat
-
-Tell the new chat:
+# 🌍 3. CORS Checklist
 
 ```txt
-CORS must be handled in BOTH places:
+🚨 CORS MUST be handled in BOTH places:
 
-1. Lambda responses:
-Every response, including errors, must return:
-Access-Control-Allow-Origin
-Access-Control-Allow-Headers
-Access-Control-Allow-Methods
-Content-Type
+1️⃣ Lambda Responses
 
-2. API Gateway:
-The resource must have:
-OPTIONS method
-authorization NONE
-MOCK integration
-200 method response with:
+EVERY response, including errors, MUST return:
+
+✅ Access-Control-Allow-Origin
+✅ Access-Control-Allow-Headers
+✅ Access-Control-Allow-Methods
+✅ Content-Type
+
+2️⃣ API Gateway
+
+The resource MUST have:
+
+✅ OPTIONS method
+✅ authorization NONE
+✅ MOCK integration
+
+✅ 200 method response headers:
 - Access-Control-Allow-Origin
 - Access-Control-Allow-Headers
 - Access-Control-Allow-Methods
 
-200 integration response with static values:
+✅ 200 integration response static values:
 - '*'
 - 'Content-Type,x-vaultdesk-token,Authorization'
 - 'GET,POST,PUT,DELETE,OPTIONS'
@@ -396,9 +459,7 @@ MOCK integration
 
 ---
 
-# 4. Replacement placeholders
-
-Use these placeholders in generated commands:
+# 🧩 4. Placeholder Variables
 
 ```txt
 <PROFILE_NAME>
@@ -419,7 +480,9 @@ Use these placeholders in generated commands:
 <FRONTEND_ROUTE>
 ```
 
-Example filled values from VaultDesk:
+---
+
+# ✅ Example Real Values
 
 ```txt
 PROFILE_NAME = salman-personal
