@@ -1,8 +1,10 @@
 # 🚀 VaultDesk Full-Stack CRUD Blueprint (Reusable System)
 
-This document explains the COMPLETE reusable architecture for building a new VaultDesk component from scratch.
+This document explains the COMPLETE reusable architecture for building a brand-new VaultDesk component from scratch. 🏗️🔥
 
-It covers:
+---
+
+# 🎯 What This Covers
 
 ✅ DynamoDB
 ✅ Lambda CRUD APIs
@@ -10,37 +12,41 @@ It covers:
 ✅ CORS
 ✅ Authorizers
 ✅ IAM Permissions
-✅ Frontend React Pages
+✅ React Frontend Pages
 ✅ Deployment
 ✅ Reusable Prompt Engineering
 
-The goal is:
+---
 
-> Give this document to ANY new ChatGPT conversation and instantly build a new VaultDesk module from frontend to backend.
+# 🧠 Goal
+
+> Give this document to ANY new ChatGPT conversation and instantly build a new VaultDesk module from frontend → backend ⚡
 
 ---
 
-# 🧠 OVERALL ARCHITECTURE
+# 🏗️ OVERALL ARCHITECTURE
 
 ```txt
-React Frontend
-      ↓
-API Gateway (REST API)
-      ↓
-Lambda Functions
-      ↓
-DynamoDB Table
+⚛️ React Frontend
+        ↓
+🌐 API Gateway (REST API)
+        ↓
+⚡ Lambda Functions
+        ↓
+🗄️ DynamoDB Table
 ```
 
 ---
 
 # 🗂️ STANDARD VAULTDESK CRUD PATTERN
 
-Every VaultDesk module follows the SAME architecture.
+Every VaultDesk module follows the SAME reusable architecture 🔥
 
-Examples:
+---
 
-| Module         | Table                  |
+## 📦 Example Modules
+
+| 🧩 Module      | 🗄️ Table               |
 | -------------- | ---------------------- |
 | Businesses     | VaultDeskBusinesses    |
 | Business Ideas | VaultDeskBusinessIdeas |
@@ -52,95 +58,117 @@ Examples:
 
 # 🔑 REQUIRED VALUES BEFORE STARTING
 
-The new chat MUST stop and ask for these values FIRST.
+⚠️ The new chat MUST STOP and ask for these values FIRST.
 
 ---
 
-## 1️⃣ AWS Profile Name
+# 1️⃣ AWS Profile Name
 
 ```txt
 salman-personal
 ```
 
-### 🧠 What is this?
+---
 
-This is the AWS CLI profile on your Mac.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
-
-AWS CLI uses this profile to know:
-
-- which AWS account to use
-- which credentials to use
-- which permissions to use
-
-### ⚠️ Without it:
-
-AWS commands fail.
+Your AWS CLI profile on your Mac 💻
 
 ---
 
-## 2️⃣ AWS Region
+## ❓ Why do we need it?
+
+AWS CLI uses this profile to know:
+
+✅ which AWS account to use
+✅ which credentials to use
+✅ which permissions to use
+
+---
+
+## ⚠️ Without it
+
+❌ AWS commands fail
+
+---
+
+# 2️⃣ AWS Region
 
 ```txt
 us-west-1
 ```
 
-### 🧠 What is this?
+---
 
-This is the AWS datacenter region.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
-
-All resources live INSIDE a region:
-
-- Lambda
-- DynamoDB
-- API Gateway
-- Logs
-
-### ⚠️ Important:
-
-Every command MUST use the same region.
+Your AWS datacenter region 🌎
 
 ---
 
-## 3️⃣ AWS Account ID
+## ❓ Why do we need it?
+
+All resources live INSIDE a region:
+
+✅ Lambda
+✅ DynamoDB
+✅ API Gateway
+✅ CloudWatch Logs
+
+---
+
+## ⚠️ Important
+
+Every command MUST use the SAME region 🚨
+
+---
+
+# 3️⃣ AWS Account ID
 
 ```txt
 311653202579
 ```
 
-### 🧠 What is this?
+---
 
-Your AWS account number.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
-
-Used in:
-
-- IAM policies
-- Lambda permissions
-- API Gateway invoke permissions
-- ARNs
+Your AWS account number 🔢
 
 ---
 
-## 4️⃣ REST API ID
+## ❓ Why do we need it?
+
+Used in:
+
+✅ IAM policies
+✅ Lambda permissions
+✅ API Gateway permissions
+✅ ARNs
+
+---
+
+# 4️⃣ REST API ID
 
 ```txt
 pwefadg62j
 ```
 
-### 🧠 What is this?
+---
 
-This is your API Gateway REST API.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
+Your API Gateway REST API 🌐
+
+---
+
+## ❓ Why do we need it?
 
 Every endpoint belongs INSIDE this API.
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 https://pwefadg62j.execute-api.us-west-1.amazonaws.com/S1/Milestones
@@ -148,21 +176,27 @@ https://pwefadg62j.execute-api.us-west-1.amazonaws.com/S1/Milestones
 
 ---
 
-## 5️⃣ Root Resource ID
+# 5️⃣ Root Resource ID
 
 ```txt
 bqzb600phi
 ```
 
-### 🧠 What is this?
+---
 
-The root folder `/` of API Gateway.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
+The root `/` folder of API Gateway 📁
 
-Every new endpoint is created UNDER this root.
+---
 
-Example:
+## ❓ Why do we need it?
+
+Every endpoint gets created UNDER this root.
+
+---
+
+## 📍 Examples
 
 ```txt
 /Milestones
@@ -172,45 +206,59 @@ Example:
 
 ---
 
-## 6️⃣ API Gateway Authorizer ID
+# 6️⃣ API Gateway Authorizer ID
 
 ```txt
 y1d5g1
 ```
 
-### 🧠 What is this?
+---
 
-The JWT authorizer.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
-
-Protects endpoints.
-
-Without it:
-
-❌ Anyone can call your APIs.
-
-With it:
-
-✅ Only logged-in users can access data.
+Your JWT authorizer 🔐
 
 ---
 
-## 7️⃣ API Stage Name
+## ❓ Why do we need it?
+
+Protects APIs from unauthorized access.
+
+---
+
+## 🚫 Without it
+
+❌ Anyone can hit your APIs
+
+---
+
+## ✅ With it
+
+✅ Only authenticated users can access data
+
+---
+
+# 7️⃣ API Stage Name
 
 ```txt
 S1
 ```
 
-### 🧠 What is this?
+---
 
-Deployment environment.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
+Deployment environment 🚀
 
-API Gateway only works AFTER deployment.
+---
 
-Example:
+## ❓ Why do we need it?
+
+API Gateway ONLY works after deployment.
+
+---
+
+## 📍 Example
 
 ```txt
 https://api-id.execute-api.region.amazonaws.com/S1/Resource
@@ -218,28 +266,38 @@ https://api-id.execute-api.region.amazonaws.com/S1/Resource
 
 ---
 
-## 8️⃣ Lambda Role ARN
+# 8️⃣ Lambda Role ARN
 
 ```txt
 arn:aws:iam::311653202579:role/VaultDesk-Business-Ideas-role
 ```
 
-### 🧠 What is this?
+---
 
-IAM role used by Lambda.
+## 🧠 What is this?
 
-### ❓ Why do we need it?
+IAM role used by Lambda ⚡
 
-This role gives Lambda permission to:
+---
+
+## ❓ Why do we need it?
+
+Gives Lambda permission to:
 
 ✅ Read DynamoDB
 ✅ Write DynamoDB
 ✅ Update items
 ✅ Query items
 
-Without permissions:
+---
 
-❌ AccessDeniedException
+## 🚫 Without permissions
+
+```txt
+AccessDeniedException
+```
+
+❌
 
 ---
 
@@ -247,18 +305,18 @@ Without permissions:
 
 ---
 
-## 🧱 Standard Schema
+# 🧱 Standard Schema
 
 Every VaultDesk table uses:
 
-| Key     | Type  |
-| ------- | ----- |
-| ownerId | HASH  |
-| epoch   | RANGE |
+| 🔑 Key  | 🧬 Type |
+| ------- | ------- |
+| ownerId | HASH    |
+| epoch   | RANGE   |
 
 ---
 
-## 🚀 Create Table Command
+# 🚀 Create Table Command
 
 ```bash
 aws dynamodb create-table \
@@ -280,115 +338,123 @@ aws dynamodb create-table \
 
 ---
 
-## `aws dynamodb create-table`
+# ⚡ `aws dynamodb create-table`
 
-### 🧠 What is this?
+## 🧠 Meaning
 
 Tells AWS:
 
-> Create a brand new DynamoDB table.
+> Create a brand new DynamoDB table 🗄️
 
 ---
 
-## `--table-name <TABLE_NAME>`
+# 🏷️ `--table-name <TABLE_NAME>`
 
-### 🧠 What is this?
+## 🧠 Meaning
 
-The actual table name.
+Actual table name.
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 VaultDeskMilestones
 ```
 
-### ❓ Why important?
+---
 
-Lambda uses this exact name.
+## ❓ Why important?
+
+Lambda uses THIS exact name.
 
 ---
 
-## `--attribute-definitions`
+# 🧬 `--attribute-definitions`
 
-### 🧠 What is this?
+## 🧠 Meaning
 
 Defines data types for keys.
 
 ---
 
-## `AttributeName=ownerId,AttributeType=S`
-
-### 🧠 Meaning:
+# 👤 `ownerId`
 
 ```txt
 ownerId = string
 ```
 
-### ❓ Why?
+---
 
-Each user owns their own records.
+## ❓ Why?
+
+Each user owns their own records 🔐
 
 ---
 
-## `AttributeName=epoch,AttributeType=S`
-
-### 🧠 Meaning:
+# 🕒 `epoch`
 
 ```txt
 epoch = string timestamp
 ```
 
-### ❓ Why?
+---
 
-Used for sorting.
+## ❓ Why?
 
-Also guarantees uniqueness.
+✅ sorting
+✅ uniqueness
+✅ creation order
 
 ---
 
-## `--key-schema`
+# 🔑 `--key-schema`
 
-### 🧠 What is this?
-
-Defines primary keys.
+Defines primary keys 🔐
 
 ---
 
-## `ownerId HASH`
+# 👤 `ownerId HASH`
 
-### 🧠 Meaning:
+## 🧠 Meaning
 
 Partition key.
 
-### ❓ Why?
+---
+
+## ❓ Why?
 
 Groups all records for one user.
 
 ---
 
-## `epoch RANGE`
+# 🕒 `epoch RANGE`
 
-### 🧠 Meaning:
+## 🧠 Meaning
 
 Sort key.
 
-### ❓ Why?
+---
 
-Lets us order records by creation time.
+## ❓ Why?
+
+Lets records be ordered by creation time.
 
 ---
 
-## `PAY_PER_REQUEST`
+# 💸 `PAY_PER_REQUEST`
 
-### 🧠 Meaning:
+## 🧠 Meaning
 
-AWS auto-scales billing.
+AWS auto-scales billing 📈
 
-### ❓ Why?
+---
 
-No need to manage read/write capacity.
+## ❓ Why?
 
-Best for startup apps.
+✅ No capacity management
+✅ Startup-friendly
+✅ Simple scaling
 
 ---
 
@@ -400,13 +466,15 @@ Best for startup apps.
 
 We use:
 
-| Lambda | Purpose |
-| ------ | ------- |
-| Create | POST    |
-| List   | GET     |
-| Update | PUT     |
+| ⚡ Lambda | 🎯 Purpose |
+| --------- | ---------- |
+| Create    | POST       |
+| List      | GET        |
+| Update    | PUT        |
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 VaultDesk-Create-Milestone
@@ -418,21 +486,16 @@ VaultDesk-Update-Milestone
 
 # 🧠 WHY 3 LAMBDAS?
 
-### ✅ Cleaner debugging
-
-Each Lambda has one responsibility.
-
-### ✅ Easier CloudWatch logs
-
-### ✅ Easier permissions
-
-### ✅ Easier scaling later
+✅ Cleaner debugging
+✅ Easier CloudWatch logs
+✅ Easier permissions
+✅ Easier future scaling
 
 ---
 
 # 🧠 WHY ONE SHARED CODE FILE?
 
-We still use ONE shared:
+Still use ONE shared:
 
 ```txt
 lambda_function.py
@@ -461,47 +524,46 @@ isDeleted
 
 ---
 
-# 🧠 WHAT EACH FIELD MEANS
+# 🧠 FIELD EXPLANATIONS
 
 ---
 
-## `ownerId`
+# 👤 `ownerId`
 
-### 🧠 What is this?
+Logged-in user ID 🔐
 
-The logged-in user.
-
-### ❓ Why?
-
-Used for user data isolation.
+Used for user isolation.
 
 ---
 
-## `epoch`
-
-### 🧠 What is this?
+# 🕒 `epoch`
 
 Timestamp.
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 1778098744885
 ```
 
-### ❓ Why?
+---
 
-Used for sorting + uniqueness.
+## ❓ Why?
+
+✅ sorting
+✅ uniqueness
 
 ---
 
-## `resourceId`
-
-### 🧠 What is this?
+# 🆔 `resourceId`
 
 Human-friendly unique ID.
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 MILESTONE_abc123
@@ -509,13 +571,13 @@ MILESTONE_abc123
 
 ---
 
-## `createdAt`
-
-### 🧠 What is this?
+# 📅 `createdAt`
 
 ISO timestamp.
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 2026-05-06T20:15:25Z
@@ -523,29 +585,25 @@ Example:
 
 ---
 
-## `updatedAt`
+# 🔄 `updatedAt`
 
-### 🧠 What is this?
-
-Last update time.
+Last update timestamp.
 
 ---
 
-## `isDeleted`
+# 🗑️ `isDeleted`
 
-### 🧠 What is this?
+Soft delete flag 🚨
 
-Soft delete flag.
+---
 
-### ❓ Why?
+## ❓ Why?
 
-Instead of deleting data permanently.
+Avoid permanent deletion.
 
 ---
 
 # 🧠 SOFT DELETE ARCHITECTURE
-
----
 
 Instead of:
 
@@ -577,12 +635,12 @@ isDeleted = True
 
 # 🧱 STANDARD ENDPOINTS
 
-| Method  | Purpose                         |
-| ------- | ------------------------------- |
-| GET     | List records                    |
-| POST    | Create record                   |
-| PUT     | Update / Complete / Soft Delete |
-| OPTIONS | CORS preflight                  |
+| 🌐 Method | 🎯 Purpose                      |
+| --------- | ------------------------------- |
+| GET       | List records                    |
+| POST      | Create record                   |
+| PUT       | Update / Complete / Soft Delete |
+| OPTIONS   | CORS preflight                  |
 
 ---
 
@@ -606,15 +664,17 @@ This is called:
 
 # 🌍 CORS PREFLIGHT
 
-Without OPTIONS:
+---
 
-❌ Browser blocks API.
+## 🚫 Without OPTIONS
+
+❌ Browser blocks API
 
 ---
 
 # 🔥 CORS REQUIREMENTS
 
-CORS must exist in TWO places.
+CORS must exist in TWO places ⚠️
 
 ---
 
@@ -635,11 +695,11 @@ Every Lambda response MUST include:
 
 # 🧠 WHY?
 
-Browser checks these headers.
+Browser validates these headers.
 
 Without them:
 
-❌ Frontend cannot access backend.
+❌ Frontend cannot access backend
 
 ---
 
@@ -656,13 +716,17 @@ API Gateway ALSO needs:
 
 # 🧠 WHY BOTH?
 
-Because:
+Because flow is:
 
 ```txt
-Browser → API Gateway → Lambda
+🌐 Browser
+   ↓
+🚪 API Gateway
+   ↓
+⚡ Lambda
 ```
 
-Both layers must allow CORS.
+Both layers MUST allow CORS.
 
 ---
 
@@ -688,7 +752,7 @@ Authorizer ID
 
 # 🧠 WHY?
 
-JWT token gets validated.
+JWT token gets validated 🔐
 
 Then user info becomes available:
 
@@ -698,11 +762,9 @@ owner_id = event["requestContext"]["authorizer"]["userId"]
 
 ---
 
-# 🧠 WHY IMPORTANT?
+# 🚫 Without this
 
-Without this:
-
-❌ Anyone could access other users’ data.
+❌ Anyone could access another user’s data
 
 ---
 
@@ -712,9 +774,9 @@ Without this:
 
 # 🧠 WHY IAM EXISTS
 
-Lambda CANNOT touch DynamoDB unless allowed.
+Lambda CANNOT touch DynamoDB unless allowed 🚨
 
-AWS security is:
+AWS security model:
 
 ```txt
 DENY BY DEFAULT
@@ -735,7 +797,7 @@ dynamodb:Query
 
 # 🧠 WHAT EACH DOES
 
-| Action     | Purpose       |
+| ⚙️ Action  | 🎯 Purpose    |
 | ---------- | ------------- |
 | PutItem    | create        |
 | GetItem    | single record |
@@ -754,7 +816,9 @@ dynamodb:Query
 src/pages/<PageName>.jsx
 ```
 
-Example:
+---
+
+## 📍 Example
 
 ```txt
 src/pages/MilestonesPage.jsx
@@ -762,9 +826,9 @@ src/pages/MilestonesPage.jsx
 
 ---
 
-# 🧠 TOKEN USAGE
+# 🔐 TOKEN USAGE
 
-Use:
+✅ Use:
 
 ```js
 const token = useSelector((state) => state.auth.token);
@@ -772,7 +836,7 @@ const token = useSelector((state) => state.auth.token);
 
 ---
 
-# ❌ DO NOT USE
+# 🚫 DO NOT USE
 
 ```js
 localStorage.getItem("vaultdesk_token");
@@ -782,13 +846,13 @@ localStorage.getItem("vaultdesk_token");
 
 # 🧠 WHY?
 
-VaultDesk auth state already lives in Redux.
+VaultDesk auth already lives in Redux.
 
 Redux is:
 
-✅ Cleaner
-✅ Centralized
-✅ Reactive
+✅ centralized
+✅ reactive
+✅ cleaner
 
 ---
 
@@ -816,7 +880,9 @@ Use:
 <select>
 ```
 
-with options like:
+---
+
+## 📍 Example Categories
 
 ```txt
 Development
@@ -830,7 +896,7 @@ Other
 
 # 🧠 WHY CUSTOM CATEGORY?
 
-Business needs evolve.
+Business needs evolve 📈
 
 Users should still be able to type:
 
@@ -839,8 +905,6 @@ AI Research
 Expansion
 Legal
 ```
-
-if not in dropdown.
 
 ---
 
@@ -855,9 +919,9 @@ Show Open Only
 
 ---
 
-# 🧠 WHY?
+## ❓ Why?
 
-Helps reduce clutter.
+Helps reduce clutter 🧹
 
 Open work stays visible.
 
@@ -894,29 +958,33 @@ Verify:
 
 ---
 
-# 🧠 MOST COMMON ERRORS
+# 🚨 MOST COMMON ERRORS
 
 ---
 
 # ❌ AccessDeniedException
 
-### Cause:
+## 📍 Cause
 
 IAM policy missing.
 
-### Fix:
+---
+
+## 🔧 Fix
 
 Add DynamoDB permissions.
 
 ---
 
-# ❌ CORS error
+# ❌ CORS Error
 
-### Cause:
+## 📍 Cause
 
 OPTIONS missing OR Lambda headers missing.
 
-### Fix:
+---
+
+## 🔧 Fix
 
 Configure BOTH.
 
@@ -924,23 +992,27 @@ Configure BOTH.
 
 # ❌ 405 Method Not Allowed
 
-### Cause:
+## 📍 Cause
 
 Method exists but integration missing.
 
-### Fix:
+---
+
+## 🔧 Fix
 
 Add integration.
 
 ---
 
-# ❌ Float types not supported
+# ❌ Float Types Not Supported
 
-### Cause:
+## 📍 Cause
 
 DynamoDB rejects Python float.
 
-### Fix:
+---
+
+## 🔧 Fix
 
 Convert to Decimal.
 
@@ -948,105 +1020,86 @@ Convert to Decimal.
 
 # 🤖 MASTER REUSABLE PROMPT
 
-This is the MOST IMPORTANT section.
+⚠️ MOST IMPORTANT SECTION ⚠️
 
-You can paste this into ANY new chat.
-
----
+Paste this into ANY new chat 🚀
 
 ```txt
-I want you to build a full-stack VaultDesk component from scratch.
+🚀 I want you to build a full-stack VaultDesk component from scratch.
 
-IMPORTANT:
-Before writing code, stop and ask me for these values:
+🛑 IMPORTANT:
+Before writing code, STOP and ask me for these values:
 
-1. AWS profile name
-2. AWS region
-3. AWS account ID
-4. REST API ID
-5. API root resource ID
-6. API Gateway authorizer ID
-7. API stage name
-8. Lambda execution role ARN
-9. New resource name plural, example: Milestones
-10. New resource name singular, example: Milestone
-11. DynamoDB table name
-12. Frontend route, example: /milestones
-13. Frontend page name, example: MilestonesPage.jsx
-14. Fields I want in the table/form
+1️⃣ AWS profile name
+2️⃣ AWS region
+3️⃣ AWS account ID
+4️⃣ REST API ID
+5️⃣ API root resource ID
+6️⃣ API Gateway authorizer ID
+7️⃣ API stage name
+8️⃣ Lambda execution role ARN
+9️⃣ New resource name plural
+🔟 New resource name singular
+1️⃣1️⃣ DynamoDB table name
+1️⃣2️⃣ Frontend route
+1️⃣3️⃣ Frontend page name
+1️⃣4️⃣ Fields I want in the table/form
 
-After I give you those values, generate everything in this exact order:
+✅ After I give you those values, generate EVERYTHING in this exact order:
 
-1. DynamoDB create-table command.
-2. IAM policy JSON and put-role-policy command.
-3. Full Python Lambda code in one lambda_function.py.
-4. Zip command.
-5. Create or update 3 Lambda functions:
-   - Create Lambda
-   - List Lambda
-   - Update Lambda
-6. API Gateway create-resource command.
-7. API Gateway GET method and AWS_PROXY integration.
-8. API Gateway POST method and AWS_PROXY integration.
-9. API Gateway PUT method and AWS_PROXY integration.
-10. API Gateway OPTIONS method with MOCK integration for CORS.
-11. Method response and integration response for OPTIONS CORS.
-12. Lambda add-permission commands for GET, POST, and PUT.
-13. API deployment command.
-14. Full React frontend page.
-15. Router import and route line.
-16. AppLayout sidebar nav item.
+1. DynamoDB create-table command
+2. IAM policy JSON + put-role-policy command
+3. Full Python Lambda code
+4. Zip command
+5. Create/update 3 Lambda functions
+6. API Gateway create-resource command
+7. GET method + AWS_PROXY integration
+8. POST method + AWS_PROXY integration
+9. PUT method + AWS_PROXY integration
+10. OPTIONS method with MOCK integration
+11. OPTIONS method response + integration response
+12. Lambda add-permission commands
+13. API deployment command
+14. Full React frontend page
+15. Router import + route line
+16. AppLayout sidebar nav item
 
-Use this backend architecture:
+🔥 Backend Rules:
+- ownerId HASH key
+- epoch RANGE key
+- soft delete only
+- filter out deleted records
+- PUT handles update/complete/delete
 
-- DynamoDB table has partition key ownerId string and sort key epoch string.
-- Each item must include:
-  - ownerId
-  - epoch
-  - resourceId
-  - createdAt
-  - updatedAt
-  - isDeleted
-- Use soft delete only.
-- GET/List Lambda must filter out records where isDeleted === true.
-- PUT must support update, complete, and soft delete.
+⚡ Lambda Rules:
+- python3.14
+- Decimal conversion
+- full CORS headers
+- authorizer userId
 
-Use this Lambda pattern:
-
-- Runtime: python3.14
-- Handler: lambda_function.lambda_handler
-- Environment variable for table name
-- event.requestContext.authorizer.userId is ownerId
-- Convert floats to Decimal
-- Return full CORS headers on every response
-
-Use this API Gateway pattern:
-
+🌐 API Gateway Rules:
 - REST API v1
 - CUSTOM authorizer
-- OPTIONS with MOCK integration
+- MOCK OPTIONS
 - AWS_PROXY integrations
-- Deploy to provided stage
 
-Use this frontend pattern:
-
+⚛️ Frontend Rules:
 - React + Vite
-- Inline styles
 - Redux token
 - Create/Edit/Delete/Complete
 - Validation
 - Toggle completed/open
 - Category dropdown + custom category
 
-Give full copy-paste-ready files.
-Do not over-explain.
+✅ Give FULL copy-paste-ready files
+❌ Do NOT over-explain
 ```
 
 ---
 
 # 🏁 FINAL RESULT
 
-Using this architecture you can now rapidly create:
+Using this architecture you can rapidly create:
 
 ✅ Tasks
 ✅ Projects
@@ -1062,15 +1115,19 @@ Using this architecture you can now rapidly create:
 ✅ Tickets
 ✅ Roadmaps
 
-with:
+---
 
-🔥 Full backend
-🔥 Full frontend
-🔥 Authentication
-🔥 API Gateway
-🔥 DynamoDB
-🔥 Lambda
-🔥 CORS
-🔥 Deployment
+# 🔥 WITH:
 
-in minutes.
+✅ Full backend
+✅ Full frontend
+✅ Authentication
+✅ API Gateway
+✅ DynamoDB
+✅ Lambda
+✅ CORS
+✅ Deployment
+
+---
+
+# ⚡ In Minutes.
